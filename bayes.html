@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Bayes</title>
+
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        #container {
+            position: fixed;
+            top: calc(10vh);
+            left: calc(50vw - 40vh);
+            width: calc(80vh);
+            height: calc(80vh);
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <svg id="container">
+
+    </svg>
+
+    <script src="d3.v4.js"></script>
+    <script>
+        let container = d3.select("#container");
+        let points = [];
+        let max = 1;
+        let x = Math.random();
+        let y = Math.random();
+        const size = 50;
+
+        for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size; j++) {
+                points.push({
+                    x: i,
+                    y: j,
+                    p: 1
+                });
+            }
+        }
+
+        function update() {
+            let step = container.node().getBoundingClientRect().width / size;
+
+            var _points = container.selectAll("circle")
+                .data(points);
+            _points.exit().remove();
+            _points.enter().append("circle");
+
+            let obj = container.selectAll("circle");
+            obj = obj.transition(100);
+            obj.attr("cx", (d, i) => {
+                return d.x * step + step / 2;
+            })
+            .attr("cy", (d, i) => {
+                return d.y * step + step / 2;
+            })
+            .attr("r", (d, i) => {
+                return d.p / max * step / 2;
+            })
+            .attr("style", (d, i) => {
+                if (Math.abs(x * size - d.x) < 0.5) {
+                    if (Math.abs((size - y * size) - d.y) < 0.5) {
+                        return "fill: red";
+                    }
+                    else {
+                        return "fill: white";
+                    }
+                }
+                else {
+                    return "fill: white";
+                }
+            });
+        }
+
+        function bayes(direction) {
+            max = 0;
+
+            for (let i = 0; i < size * size; i++) {
+                point = points[i];
+
+                let total = 0;
+                switch (direction) {
+                    case "ne":
+                        for (let i = 0; i < size; i++) {
+                            for (let j = 0; j < size; j++) {
+                                if ((i < point.x) && (j < point.y)) {
+                                    total += 1;
+                                }
+                            }
+                        }
+                    break;
+                    case "nw":
+                        for (let i = 0; i < size; i++) {
+                            for (let j = 0; j < size; j++) {
+                                if ((i > point.x) && (j < point.y)) {
+                                    total += 1;
+                                }
+                            }
+                        }
+                    break;
+                    case "se":
+                        for (let i = 0; i < size; i++) {
+                            for (let j = 0; j < size; j++) {
+                                if ((i < point.x) && (j > point.y)) {
+                                    total += 1;
+                                }
+                            }
+                        }
+                    break;
+                    case "sw":
+                        for (let i = 0; i < size; i++) {
+                            for (let j = 0; j < size; j++) {
+                                if ((i > point.x) && (j > point.y)) {
+                                    total += 1;
+                                }
+                            }
+                        }
+                    break;
+                }
+
+                points[i].p *= (total / 361);
+
+                if (points[i].p > max) {
+                    max = points[i].p;
+                }
+            }
+        }
+
+        update();
+
+        let bayesUpdate = () => {
+            let direction = "";
+            if (Math.random() > y) {
+                direction += "n"
+            }
+            else {
+                direction += "s"
+            }
+            if (Math.random() > x) {
+                direction += "w"
+            }
+            else {
+                direction += "e"
+            }
+            bayes(direction);
+            update();
+
+            window.setTimeout(bayesUpdate, 300);
+        };
+        window.setTimeout(bayesUpdate, 1000);
+    </script>
+</body>
+</html>
